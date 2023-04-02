@@ -7,8 +7,10 @@ import os
 import cv2
 import numpy as np
 
+from skimage.metrics import structural_similarity as compare_ssim
+import imutils
+
 # FILE_NAME = "floorplan1.jpg"
-# pipeline = keras_ocr.pipeline.Pipeline()
 
 def midpoint(x1, y1, x2, y2):
     x_mid = int((x1 + x2)/2)
@@ -16,9 +18,9 @@ def midpoint(x1, y1, x2, y2):
     return x_mid, y_mid
 
 def inpaint_text(img_path, pipeline):
-    img = keras_ocr.tools.read(img_path) # read image
+    img = keras_ocr.tools.read(img_path)
 
-    # generate (word, box) tuples 
+    # Generate (word, box) tuples 
     prediction_groups = pipeline.recognize([img])
     mask = np.zeros(img.shape[:2], dtype="uint8")
 
@@ -42,9 +44,9 @@ def prep_images(path, pipeline):
     # path = pathlib.Path(os.path.join(r'assets/test/', FILE_NAME))
 
     uncropped = inpaint_text(str(path), pipeline)
-    plt.imshow(uncropped)
+    # plt.imshow(uncropped)
     
-    # assign images
+    # Assign images
     # uncropped = Image.open(original_path)
     # uncropped = cv2.imread(str(original_path))
 
@@ -56,8 +58,11 @@ def prep_images(path, pipeline):
     # cv2.imshow('new', new)
     # cv2.waitKey(0)
 
-    before = uncropped.crop((0, 0, width//2, height)) #.save("og", "JPEG") # (l, u, r, d)
-    after = uncropped.crop((width//2, 0, width, height))#.save("new", "JPEG")
+    # Convert numpy array to PIL image
+    # uncropped_image = Image.fromarray(uncropped)
+
+    # before = uncropped_image.crop((0, 0, width//2, height)) #.save("og", "JPEG") # (l, u, r, d)
+    # after = uncropped_image.crop((width//2, 0, width, height))#.save("new", "JPEG")
     # original.show()
     # new.show()
 
@@ -134,29 +139,86 @@ def align_images(before, after):
     return aligned_img, after
   
 def find_diff(before, after):
-    before = cv2.cvtColor(before, cv2.COLOR_BGR2RGB)
-    after = cv2.cvtColor(after, cv2.COLOR_BGR2RGB)
+    # Method 1:
+    # before = cv2.cvtColor(before, cv2.COLOR_BGR2RGB)
+    # after = cv2.cvtColor(after, cv2.COLOR_BGR2RGB)
 
-    before = Image.fromarray(before)
-    after = Image.fromarray(after)
+    # before = Image.fromarray(before)
+    # after = Image.fromarray(after)
 
-    # finding difference
-    diff = ImageChops.difference(before, after)
-    
-    # showing the difference
-    diff.show()
+    # # Finding difference
+    # diff = ImageChops.difference(before, after)
+    # diff.show()
 
-def diff_pipeline(path):
-    # read images
-    before, after = prep_images(path)
+    # Method 2:
+    before_grey = cv2.cvtColor(before, cv2.COLOR_BGR2GRAY)
+    after_grey = cv2.cvtColor(after, cv2.COLOR_BGR2GRAY)
 
-    # align images
+    # Compute the Structural Similarity Index (SSIM) between the two images, ensuring that the difference image is returned
+    (score, diff) = compare_ssim(before_grey, after_grey, full=True)
+    diff = (diff * 255).astype("uint8")
+    print("SSIM: {}".format(score))
+
+    # Threshold the difference image, then find contours to obtain the regions of the two input images that differ
+    thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+    contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours = imutils.grab_contours(contours)
+
+    for c in contours:
+        # Compute the bounding box of the contour and then draw the bounding box on both input images to represent where the two images differ
+        (x, y, w, h) = cv2.boundingRect(c)
+        cv2.rectangle(before, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        cv2.rectangle(after, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        
+    # Show the output images
+    # cv2.imshow("Original", before)
+    # cv2.imshow("Modified", after)
+    # cv2.imshow("Diff", diff)
+    # cv2.imshow("Thresh", thresh)
+    # cv2.waitKey(0)
+
+    return before, after, diff
+
+def combine_images(before, after, diff, ratio):
+    images = [Image.fromarray(before), Image.fromarray(after), Image.fromarray(diff)]
+    widths, heights = zip(*(i.size for i in images))
+
+    total_width = sum(widths)
+    max_height = max(heights)
+
+    new_im = Image.new('RGB', (total_width, max_height))
+
+    x_offset = 0
+    for im in images:
+        new_im.paste(im, (x_offset,0))
+        x_offset += im.size[0]
+
+    new_im.thumbnail(ratio)
+    new_im = np.array(new_im)
+
+    return new_im
+
+def diff_pipeline(path, ratio):
+    print("Started pipeline")
+
+    # Read images
+    pipeline = keras_ocr.pipeline.Pipeline()
+    before, after = prep_images(path, pipeline)
+
+    # Align images
     before, after = align_images(before, after)
     # cv2.imshow('Before', before)
     # cv2.imshow('After', after)
     # cv2.waitKey(0)
 
-    find_diff(before, after)
+    # Find diff
+    before_box, after_box, diff = find_diff(before, after)
+
+    # Combine image
+    image = combine_images(before_box, after_box, diff, ratio)
+
+    print("End of pipeline")
+    return image
 
 # if __name__ == "__main__":
     # read images

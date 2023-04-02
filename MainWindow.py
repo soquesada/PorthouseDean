@@ -1,14 +1,17 @@
 import sys
 import os
+from PyQt6 import QtCore
+from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtWidgets import (QApplication, QWidget, QPushButton, QTextEdit, QComboBox, QFileDialog,
-                            QHBoxLayout, QVBoxLayout)
+                            QHBoxLayout, QVBoxLayout, QLabel)
 
 from ImageDifference import *
 
 class MyApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.window_width, self.window_height = 800, 100
+        # self.window_width, self.window_height = 800, 100
+        self.window_width, self.window_height = 800, 300
         self.setMinimumSize(self.window_width, self.window_height)
 
         layout = QVBoxLayout()
@@ -28,10 +31,16 @@ class MyApp(QWidget):
         layout.addWidget(btn)
 
         # Text box
-        self.textbox = QTextEdit()
-        layout.addWidget(self.textbox)
+        # self.textbox = QTextEdit()
+        # layout.addWidget(self.textbox)
+
+        # Label for images
+        self.imagebox = QLabel(self)
+        self.imagebox.setStyleSheet("border: 1px solid black;")
+        layout.addWidget(self.imagebox)
 
         # Important variables
+        self.ratio = ()
         self.original_path = ""
 
 
@@ -59,10 +68,22 @@ class MyApp(QWidget):
             filter=file_filter,
             initialFilter='Image File (*.png *.jpg)'
         )
-        self.textbox.setText(str(response))
+        # self.textbox.setText(str(response))
+        
         self.original_path = response[0]
 
-        diff_pipeline(self.original_path)
+        if os.path.exists(self.original_path):
+            h, w = self.size().height(), self.size().width()
+            self.ratio = (h, w)
+
+            image = diff_pipeline(self.original_path, self.ratio)
+
+            height, width, channel = image.shape
+            qImg = QImage(image.data, width, height, 3*width, QImage.Format.Format_RGB888)
+            self.imagebox.setPixmap(QPixmap(qImg))
+            # self.resize(pixmap.width(), pixmap.height())
+        else:
+            print("Invalid file path")
 
 
     def getFileNames(self):
@@ -74,7 +95,7 @@ class MyApp(QWidget):
             filter=file_filter,
             initialFilter='Excel File (*.xlsx *.xls)'
         )
-        self.textbox.setText(str(response))
+        # self.textbox.setText(str(response))
 
 
     def getDirectory(self):
@@ -82,7 +103,8 @@ class MyApp(QWidget):
              self,
              # caption='Select a folder'
          )
-         self.textbox.setText(str(response))
+        #  self.textbox.setText(str(response))
+
 
     def getSaveFileName(self):
          file_filter = 'Data File (*.xlsx *.csv *.dat);; Excel File (*.xlsx *.xls)'
@@ -93,7 +115,7 @@ class MyApp(QWidget):
              filter=file_filter,
              initialFilter='Excel File (*.xlsx *.xls)'
          )
-         self.textbox.setText(str(response))
+        #  self.textbox.setText(str(response))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
