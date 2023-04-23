@@ -1,3 +1,2 @@
-'Before', before)
-    # cv2.imshow('After', after)
-    # cv2.waitKey(0)
++ "\n")
+        # print(type(file))
