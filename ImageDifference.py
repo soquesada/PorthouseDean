@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import keras_ocr
 import math
 from PIL import Image, ImageChops
@@ -45,9 +45,8 @@ def inpaint_text(img_path, pipeline):
 def prep_images(path, pipeline):
     uncropped = inpaint_text(str(path), pipeline)
     
-    # Assign images
-    # uncropped = Image.open(original_path)
-    # uncropped = cv2.imread(str(original_path))
+    # Save image
+    cv2.imwrite('no_text.png', uncropped)
 
     height, width = uncropped.shape[0], uncropped.shape[1]
     before = uncropped[:, : width//2]
@@ -141,7 +140,8 @@ def find_diff(before, after):
     # Threshold the difference image, then find contours to obtain the regions of the two input images that differ
     thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
     contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    contours = imutils.grab_contours(contours)
+    # contours = imutils.grab_contours(contours)
+    contours = contours[0] if len(contours) == 2 else contours[1]
 
     for c in contours:
         # Compute the bounding box of the contour and then draw the bounding box on both input images to represent where the two images differ

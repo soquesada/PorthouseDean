@@ -22,7 +22,7 @@ class MyApp(QMainWindow):
         self.setCentralWidget(widget)
 
         # Creates the drop down options
-        self.options = ('Get comparison image', 'Get multiple images', 'Get two, separate comparison images', 'getSaveFileName()')
+        self.options = ('Get comparison image', 'Get multiple images', 'Get two, separate comparison images')
 
         # Combo box
         self.combo = QComboBox()
@@ -94,8 +94,6 @@ class MyApp(QMainWindow):
             response = self.getFileNames()
         elif option == 2:
             response = self.getDirectory()
-        elif option == 3:
-            response = self.getSaveFileName()
         else:
             print('No response')
 
@@ -108,7 +106,6 @@ class MyApp(QMainWindow):
             file_dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
             file_dialog.setNameFilters(["BMP File (*.bmp)", "GIF File (*.gif)", "JPEG File (*.jpeg)", "PNG File (*.png)", "PBM File (*.pbm)", "PGM File (*.pgm)", "PPM File (*.ppm)", "XBM File (*.xbm)", "XPM File (*.xpm)"])
             file_dialog.setMimeTypeFilters(["image/bmp", "image/gif", "image/jpeg", "image/png", "image/x-portable-bitmap", "image/x-portable-graymap", "image/x-portable-pixmap", "image/x-xbitmap", "image/x-xpixmap"])
-            # file_name, _ = file_dialog.getSaveFileName(self, "Save image file", "", filter=file_filter)
             file_dialog.selectFile("new")
 
             # If the user didn't cancel the file dialog, save the image
@@ -180,18 +177,6 @@ class MyApp(QMainWindow):
          response = QFileDialog.getExistingDirectory(
              self,
              # caption='Select a folder'
-         )
-        #  self.textbox.setText(str(response))
-
-
-    def getSaveFileName(self):
-         file_filter = 'Data File (*.xlsx *.csv *.dat);; Excel File (*.xlsx *.xls)'
-         response = QFileDialog.getSaveFileName(
-             parent=self,
-             caption='Select a data file',
-             directory= 'Data File.dat',
-             filter=file_filter,
-             initialFilter='Excel File (*.xlsx *.xls)'
          )
         #  self.textbox.setText(str(response))
 
