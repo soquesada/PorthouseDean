@@ -6,7 +6,7 @@ The application can be launched using the executable file, `Difference Detector.
 
 A screenshot of the user interface can be seen below.
 
-![Screenshot of the user interface at first launch](readme_assets\user_interface.png)
+![Screenshot of the user interface at first launch](/readme_assets/user_interface.png)
 
 Users must select the option “Get comparison image” which will launch a file dialog box to select a file. This file must contain two images side by side wherein the left is the “before” image and the right is the “after” image. Results can take a while to load.
 
@@ -21,7 +21,7 @@ python -u "path\to\file\MainWindow.py"
 
 An example of the results produced after inputting an image can be seen below.
 
-![Example of the differences highlighted in the image](readme_assets\result1.png)
+![Example of the differences highlighted in the image](/readme_assets/result1.png)
 
 ## Machine Learning Scripts
 
